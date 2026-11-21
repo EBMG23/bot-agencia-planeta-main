@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlanetaBot - Asistente de Reclutamiento | Agencia Planeta</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.0/index.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg-primary: #0a0e27;
+    --bg-secondary: #131836;
+    --bg-card: #1a1f45;
+    --bg-input: #0f1433;
+    --accent-primary: #7c3aed;
+    --accent-secondary: #a855f7;
+    --accent-glow: rgba(124, 58, 237, 0.3);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: rgba(124, 58, 237, 0.2);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+  }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  /* Animated background */
+  .bg-animation {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  
+  .bg-animation .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--duration) infinite;
+    opacity: 0;
+  }
+  
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; }
+    50% { opacity: var(--opacity); }
+  }
+  
+  .planet-bg {
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.15), rgba(168, 85, 247, 0.05), transparent);
+    filter: blur(60px);
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  .planet-bg-2 {
+    position: fixed;
+    bottom: -300px; left: -200px;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 70% 70%, rgba(59, 130, 246, 0.1), rgba(124, 58, 237, 0.05), transparent);
+    filter: blur(80px);
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  /* Layout */
+  .app-container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .logo {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    animation: pulse-glow 3s ease-in-out infinite;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  
+  .logo svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+    50% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(124, 58, 237, 0.15); }
+  }
+  
+  .header-text h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f1f5f9, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .header-text p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  
+  .status-badge {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: var(--success);
+  }
+  
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  
+  /* Chat Area */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .welcome-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+  }
+  
+  .welcome-card .icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  
+  .welcome-card .icon svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .welcome-card h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  
+  .welcome-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-width: 500px;
+    margin: 0 auto 20px;
+  }
+  
+  .quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  
+  .quick-btn {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .quick-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+  }
+  
+  /* Messages */
+  .message {
+    display: flex;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .message-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  
+  .message-avatar.bot {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 0 15px var(--accent-glow);
+  }
+  
+  .message-avatar.bot svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .message-avatar.user {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    font-size: 18px;
+  }
+  
+  .message-content {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .message-bubble {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+  }
+  
+  .message-bubble.user-msg {
+    background: var(--bg-card);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  
+  .message-time {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    padding-left: 4px;
+  }
+  
+  /* Response Cards */
+  .response-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  
+  .objection-header {
+    padding: 14px 20px;
+    background: rgba(245, 158, 11, 0.08);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--warning);
+    font-weight: 600;
+  }
+  
+  .response-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .response-section:last-child {
+    border-bottom: none;
+  }
+  
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .response-text {
+    background: var(--bg-input);
+    border: 1px solid rgba(124, 58, 237, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    position: relative;
+  }
+  
+  .copy-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    padding: 6px 12px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .copy-btn:hover {
+    background: var(--accent-secondary);
+    transform: scale(1.05);
+  }
+  
+  .copy-btn.copied {
+    background: var(--success);
+  }
+  
+  .tip-card {
+    padding: 14px 20px;
+    background: rgba(16, 185, 129, 0.06);
+    border-top: 1px solid rgba(16, 185, 129, 0.2);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--success);
+    line-height: 1.5;
+  }
+  
+  .tip-card strong {
+    white-space: nowrap;
+  }
+  
+  /* Input Area */
+  .input-area {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    backdrop-filter: blur(10px);
+  }
+  
+  .input-wrapper {
+    flex: 1;
+    position: relative;
+  }
+  
+  .input-wrapper textarea {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 52px;
+    max-height: 120px;
+    line-height: 1.5;
+  }
+  
+  .input-wrapper textarea::placeholder {
+    color: var(--text-muted);
+  }
+  
+  .input-wrapper textarea:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  
+  .send-btn {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .send-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  
+  .send-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  /* Typing indicator */
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 8px 0;
+  }
+  
+  .typing-indicator span {
+    width: 8px; height: 8px;
+    background: var(--accent-secondary);
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+  }
+  
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  
+  @keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-8px); opacity: 1; }
+  }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+  
+  /* Responsive */
+  @media (max-width: 640px) {
+    .app-container { padding: 12px; }
+    .header { padding: 16px; gap: 12px; border-radius: 16px; }
+    .header-text h1 { font-size: 1.2rem; }
+    .status-badge { display: none; }
+    .welcome-card { padding: 24px 16px; }
+    .response-section { padding: 16px; }
+    .input-area { padding: 12px; border-radius: 16px; }
+    .logo { width: 52px; height: 52px; }
+    .message-avatar { width: 36px; height: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-animation" id="bgAnimation"></div>
+<div class="planet-bg"></div>
+<div class="planet-bg-2"></div>
+
+<!-- SVG Logo Definition (reusable) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="planetGrad" cx="40%" cy="40%">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </radialGradient>
+    <radialGradient id="bgGrad" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </radialGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#a78bfa" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#c4b5fd" stop-opacity="0.3"/>
+    </linearGradient>
+    <clipPath id="circleClip">
+      <circle cx="100" cy="100" r="95"/>
+    </clipPath>
+  </defs>
+  <symbol id="planetaLogo" viewBox="0 0 200 200">
+    <!-- Outer decorative border -->
+    <circle cx="100" cy="100" r="98" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-dasharray="3,2" opacity="0.6"/>
+    <circle cx="100" cy="100" r="95" fill="url(#bgGrad)"/>
+    
+    <!-- Stars -->
+    <g fill="#fbbf24">
+      <polygon points="30,30 32,36 38,36 33,40 35,46 30,42 25,46 27,40 22,36 28,36"/>
+      <polygon points="170,25 171,29 175,29 172,32 173,36 170,33 167,36 168,32 165,29 169,29" transform="scale(0.8) translate(40,10)"/>
+      <polygon points="175,170 177,175 182,175 178,178 179,183 175,180 171,183 172,178 168,175 173,175" transform="scale(0.7) translate(70,70)"/>
+      <polygon points="25,160 27,165 32,165 28,168 29,173 25,170 21,173 22,168 18,165 23,165" transform="scale(0.9) translate(5,20)"/>
+      <circle cx="160" cy="60" r="2" fill="#fde68a"/>
+      <circle cx="40" cy="70" r="1.5" fill="#fde68a"/>
+      <circle cx="150" cy="150" r="2" fill="#fde68a"/>
+      <circle cx="60" cy="160" r="1.5" fill="#fde68a"/>
+    </g>
+    
+    <!-- Planet with rings -->
+    <g clip-path="url(#circleClip)">
+      <!-- Planet body -->
+      <circle cx="100" cy="100" r="45" fill="url(#planetGrad)"/>
+      <!-- Planet highlight -->
+      <ellipse cx="85" cy="85" rx="20" ry="15" fill="#bae6fd" opacity="0.4"/>
+      <!-- Ring behind -->
+      <ellipse cx="100" cy="100" rx="65" ry="15" fill="none" stroke="url(#ringGrad)" stroke-width="4" transform="rotate(-15 100 100)"/>
+      <!-- Ring front -->
+      <ellipse cx="100" cy="100" rx="65" ry="15" fill="none" stroke="url(#ringGrad)" stroke-width="4" transform="rotate(-15 100 100)" opacity="0.6"/>
+    </g>
+    
+    <!-- "Planeta" text in pink cursive -->
+    <text x="100" y="95" text-anchor="middle" font-family="'Brush Script MT', 'Segoe Script', cursive" font-size="42" font-weight="bold" fill="#f472b6" stroke="white" stroke-width="2" paint-order="stroke" transform="rotate(-8 100 95)">Planeta</text>
+    
+    <!-- Pink banner with "Planeta" in blue -->
+    <rect x="55" y="115" width="90" height="22" rx="4" fill="#f472b6"/>
+    <text x="100" y="132" text-anchor="middle" font-family="'Inter', sans-serif" font-size="13" font-weight="bold" fill="#1e3a8a">Planeta</text>
+    
+    <!-- Decorative sparkles -->
+    <g fill="#fde68a">
+      <path d="M 50 50 L 52 55 L 57 55 L 53 58 L 54 63 L 50 60 L 46 63 L 47 58 L 43 55 L 48 55 Z" opacity="0.9"/>
+      <path d="M 155 140 L 156 143 L 159 143 L 157 145 L 158 148 L 155 146 L 152 148 L 153 145 L 151 143 L 154 143 Z" opacity="0.9"/>
+    </g>
+  </symbol>
+</svg>
+
+<div class="app-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <svg viewBox="0 0 200 200"><use href="#planetaLogo"/></svg>
+    </div>
+    <div class="header-text">
+      <h1>PlanetaBot</h1>
+      <p>Asistente de Reclutamiento Elite</p>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      En línea
+    </div>
+  </header>
+  
+  <!-- Chat Area -->
+  <div class="chat-area" id="chatArea">
+    <div class="welcome-card" id="welcomeCard">
+      <div class="icon">
+        <svg viewBox="0 0 200 200"><use href="#planetaLogo"/></svg>
+      </div>
+      <h2>¡Bienvenido, Reclutador!</h2>
+      <p>Pega aquí la objeción o duda del creador y te generaré al instante 2 opciones de respuesta listas para enviar.</p>
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="useQuickAction('No sé si esto sea real o una estafa')">🛡️ Es estafa</button>
+        <button class="quick-btn" onclick="useQuickAction('¿Me van a quitar porcentaje de mis ganancias?')">💰 Cobran porcentaje</button>
+        <button class="quick-btn" onclick="useQuickAction('No tengo tiempo, tengo que trabajar')">⏰ Sin tiempo</button>
+        <button class="quick-btn" onclick="useQuickAction('¿Me van a pedir mi contraseña?')">🔑 Piden contraseña</button>
+        <button class="quick-btn" onclick="useQuickAction('No quiero perder el control de mi cuenta')">👤 Control de cuenta</button>
+        <button class="quick-btn" onclick="useQuickAction('¿Tengo que cumplir horarios?')">📅 Horarios</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-wrapper">
+      <textarea id="userInput" placeholder="Pega la objeción o duda del creador aquí..." rows="1" onkeydown="handleKeydown(event)"></textarea>
+    </div>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+// Generate stars
+const bgAnimation = document.getElementById('bgAnimation');
+for (let i = 0; i < 80; i++) {
+  const star = document.createElement('div');
+  star.className = 'star';
+  star.style.left = Math.random() * 100 + '%';
+  star.style.top = Math.random() * 100 + '%';
+  star.style.setProperty('--duration', (2 + Math.random() * 4) + 's');
+  star.style.setProperty('--opacity', (0.3 + Math.random() * 0.7));
+  star.style.animationDelay = Math.random() * 3 + 's';
+  bgAnimation.appendChild(star);
+}
+
+// Auto-resize textarea
+const textarea = document.getElementById('userInput');
+textarea.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+function handleKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function useQuickAction(text) {
+  textarea.value = text;
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+  textarea.focus();
+}
+
+function getTime() {
+  return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+
+function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const welcomeCard = document.getElementById('welcomeCard');
+  if (welcomeCard) welcomeCard.style.display = 'none';
+  
+  const chatArea = document.getElementById('chatArea');
+  
+  const userMsg = document.createElement('div');
+  userMsg.className = 'message';
+  userMsg.innerHTML = `
+    <div class="message-avatar user">👤</div>
+    <div class="message-content">
+      <div class="message-bubble user-msg">${escapeHtml(text)}</div>
+      <div class="message-time">${getTime()}</div>
+    </div>
+  `;
+  chatArea.appendChild(userMsg);
+  
+  input.value = '';
+  input.style.height = 'auto';
+  
+  const typingMsg = document.createElement('div');
+  typingMsg.className = 'message';
+  typingMsg.id = 'typingIndicator';
+  typingMsg.innerHTML = `
+    <div class="message-avatar bot"><svg viewBox="0 0 200 200"><use href="#planetaLogo"/></svg></div>
+    <div class="message-content">
+      <div class="message-bubble">
+        <div class="typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  `;
+  chatArea.appendChild(typingMsg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  
+  setTimeout(() => {
+    const typing = document.getElementById('typingIndicator');
+    if (typing) typing.remove();
+    
+    const response = generateResponse(text);
+    const botMsg = document.createElement('div');
+    botMsg.className = 'message';
+    botMsg.innerHTML = `
+      <div class="message-avatar bot"><svg viewBox="0 0 200 200"><use href="#planetaLogo"/></svg></div>
+      <div class="message-content">
+        ${response}
+        <div class="message-time">${getTime()}</div>
+      </div>
+    `;
+    chatArea.appendChild(botMsg);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 1200 + Math.random() * 800);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function generateResponse(input) {
+  const lower = input.toLowerCase();
+  
+  let objection = '';
+  let textOption = '';
+  let audioOption = '';
+  let tip = '';
+  
+  if (lower.includes('estafa') || lower.includes('fraude') || lower.includes('real') || lower.includes('falso') || lower.includes('confío') || lower.includes('confia')) {
+    objection = 'Desconfianza / Temor a estafa';
+    textOption = `¡Te entiendo perfectamente! 😅 Es súper normal dudar porque lamentablemente hay mucha desinformación y gente mala ahí afuera.
+
+Por eso en **Agencia Planeta** todo es 100% transparente: no te pedimos contraseñas, no cobramos ni un solo centavo de tus ganancias y no hay contratos trampa. De hecho, a nosotros nos paga directamente la plataforma por ayudarte a crecer. 🙌
+
+Puedes revisar todos los detalles oficiales, beneficios y testimonios directamente en nuestra web:
+👉 [ENLACE_DE_LA_WEB]
+
+Échale un ojo a la página, ¿qué te parece si lo revisas y me dices si tienes alguna duda con el registro?`;
+    audioOption = `¡Hola! Oye, te entiendo muchísimo, la verdad haces bien en cuidar tu cuenta. Mira, para que estés 100% tranquilo, en Agencia Planeta no te pedimos clave de nada ni te quitamos porcentaje de tus ganancias, todo es gratis y transparente. Te voy a dejar aquí abajo el link directo a nuestra página web oficial para que le eches un vistazo con calma, veas todo lo que ofrecemos y te registres cuando te sientas listo. Revisa la web y me avisas ¿vale?`;
+    tip = 'Si el creador sigue dudando, ofrécele hacer una videollamada rápida para mostrarle la web en vivo y resolver sus dudas cara a cara.';
+  }
+  else if (lower.includes('porcentaje') || lower.includes('quitan') || lower.includes('cobran') || lower.includes('cobro') || lower.includes('pago') || lower.includes('dinero') || lower.includes('ganancia') || lower.includes('diamante')) {
+    objection = 'Miedo a perder ganancias';
+    textOption = `¡Tranqui! Esa es una de las mejores noticias que te puedo dar 🎉
+
+En **Agencia Planeta** tú te quedas con el 100% de tus diamantes, regalos y ganancias. NO te quitamos absolutamente nada. 💎
+
+¿De dónde sale entonces lo que gana la agencia? La plataforma (TikTok) nos paga directamente a nosotros por bonos de rendimiento y metas de equipo. O sea, ¡mientras más creces tú, más ganamos nosotros! Es un ganar-ganar real. 🤝
+
+Todo esto y más está explicado con detalle en nuestra web oficial:
+👉 [ENLACE_DE_LA_WEB]
+
+¿Lo revisas y me cuentas si te queda claro? Si tienes más dudas de números, aquí estoy. 📊`;
+    audioOption = `¡Hey! Mira, esto te va a encantar: en Agencia Planeta tú te quedas con el 100% de tus diamantes y ganancias, no te quitamos ni un centavo. A nosotros nos paga la plataforma directamente por metas y bonos de equipo. Es 100% gratis para ti. Te dejo aquí abajo el link de nuestra web para que veas todo explicado con detalle. Échale un ojo y me dices qué te parece, ¿va?`;
+    tip = 'Refuerza con un ejemplo concreto: "Si generas 1000 diamantes, los 1000 son tuyos. Así de simple."';
+  }
+  else if (lower.includes('tiempo') || lower.includes('horario') || lower.includes('trabajo') || lower.includes('ocupad') || lower.includes('no puedo') || lower.includes('estudio')) {
+    objection = 'Falta de tiempo disponible';
+    textOption = `¡Te entiendo! La vida de creador es a mil por hora 🏃‍♂️
+
+La buena noticia es que en **Agencia Planeta** NO hay horarios obligatorios ni jefes encima de ti. Tú manejas tu tiempo con total libertad. 🕐
+
+Lo único que recomendamos es constancia: con mínimo 10-15 horas al mes ya puedes ver resultados reales. Pero la decisión de cuándo y cuánto transmitir es 100% tuya.
+
+En nuestra web puedes ver cómo otros creadores lo han logrado con sus propios tiempos:
+👉 [ENLACE_DE_LA_WEB]
+
+¿Qué te parece si le das un vistazo y me dices cuántas horas a la semana más o menos podrías dedicarle? Así te asesoro mejor. 💡`;
+    audioOption = `¡Hey! No te preocupes por el tiempo, aquí no hay horarios ni jefes. Tú decides cuándo y cuánto hacer. Solo te pedimos constancia, como 10 o 15 horas al mes para empezar a ver resultados, pero todo es a tu ritmo. Te paso el link de nuestra web abajo para que veas cómo otros creadores lo han logrado sin descuidar sus otras actividades. Revísalo y me cuentas, ¿vale?`;
+    tip = 'Pregúntale cuántas horas tiene disponibles y ayúdale a ver que con poco tiempo ya puede empezar.';
+  }
+  else if (lower.includes('contraseña') || lower.includes('clave') || lower.includes('acceso') || lower.includes('robar') || lower.includes('cuenta')) {
+    objection = 'Temor por seguridad de cuenta';
+    textOption = `¡Uf, qué bueno que preguntas! 🔒 Esa es una preocupación muy válida.
+
+Te lo digo clarito: en **Agencia Planeta** NUNCA te pedimos tu contraseña ni ningún acceso privado a tu cuenta. Tu cuenta es 100% TUYA, siempre. 🏠
+
+Nosotros te ayudamos desde afuera: con asesorías, soporte técnico si tienes problemas y acceso a eventos y bonos. Pero el control total lo tienes tú.
+
+Y si algún día decides que ya no quieres estar con nosotros, te vas sin penalizaciones y tu cuenta sigue siendo tuya. Sin dramas. ✌️
+
+Puedes ver todas nuestras políticas de transparencia en la web:
+👉 [ENLACE_DE_LA_WEB]
+
+¿Te queda más claro así? Si quieres, revisa la web y me dices qué te parece. 🙌`;
+    audioOption = `¡Tranqui! En Agencia Planeta jamás te pedimos tu contraseña ni acceso a tu cuenta. Tu perfil es 100% tuyo, siempre. Nosotros te apoyamos desde afuera con asesorías y soporte, pero el control lo tienes tú. Y si algún día quieres salirte, te vas sin problema y sin penalización. Te dejo el link de la web abajo para que veas todas nuestras políticas de transparencia. Revísalo y me cuentas.`;
+    tip = 'Enfatiza que la agencia NUNCA pide credenciales. Es el punto más fuerte para generar confianza inmediata.';
+  }
+  else if (lower.includes('control') || lower.includes('dueño') || lower.includes('propiedad') || lower.includes('mía') || lower.includes('penalización') || lower.includes('contrato') || lower.includes('atrapad')) {
+    objection = 'Miedo a perder control/propiedad';
+    textOption = `¡Excelente pregunta! 🎯 Tu cuenta es TUYA, 100% tuya. Eso no se negocia.
+
+En **Agencia Planeta** no somos dueños de tu perfil, ni te pedimos acceso privado, ni te amarramos con contratos eternos. Si algún día decides que ya no quieres estar, te vas libre, sin penalizaciones y con tu cuenta intacta. 🕊️
+
+Nosotros somos tu equipo de apoyo: te damos herramientas, capacitación y soporte para que crezcas más rápido. Pero las decisiones las tomas tú.
+
+Todo esto está documentado en nuestra web oficial:
+👉 [ENLACE_DE_LA_WEB]
+
+¿Lo revisas y me dices si te sientes más tranquilo? Quiero que te unas con total confianza. 💪`;
+    audioOption = `Mira, tu cuenta es tuya y siempre va a ser tuya. En Agencia Planeta no te amarramos con contratos raros ni te pedimos acceso a tu perfil. Si algún día quieres irte, te vas sin problema y sin penalización. Nosotros solo somos tu equipo de apoyo para que crezcas más rápido. Te dejo aquí abajo el link de la web para que veas todo con detalle. Revísalo con calma y me avisas.`;
+    tip = 'Usa la frase "sin cadenas, sin candados" para que el creador visualice que no hay compromiso forzado.';
+  }
+  else if (lower.includes('horario') || lower.includes('oblig') || lower.includes('jefe') || lower.includes('presi')) {
+    objection = 'Temor a horarios obligatorios';
+    textOption = `¡Para nada! 🙅‍♂️ Aquí no hay horarios obligatorios ni jefes encima de ti.
+
+En **Agencia Planeta** tú eres tu propio jefe. Decides cuándo transmitir, cuánto tiempo y qué días. Total libertad. 🗓️
+
+Lo único que te recomendamos es ser constante (mínimo 10-15 horas al mes) porque así es como realmente ves resultados. Pero el cuándo y el cómo lo decides tú.
+
+En nuestra web puedes ver testimonios de creadores que lo hacen compatible con sus otras actividades:
+👉 [ENLACE_DE_LA_WEB]
+
+¿Qué te parece? Échale un ojo y me dices si encaja con tu estilo de vida. 😊`;
+    audioOption = `¡Nada de horarios! Tú eres tu propio jefe aquí. Decides cuándo y cuánto hacer. Solo te recomendamos constancia, como 10 o 15 horas al mes, pero todo es a tu ritmo. Te paso el link de la web para que veas cómo otros creadores lo han logrado sin descuidar nada. Revísalo y me cuentas.`;
+    tip = 'Si el creador tiene otro trabajo, dile que muchos de nuestros creadores lo combinan con sus empleos actuales.';
+  }
+  else if (lower.includes('beneficio') || lower.includes('gano') || lower.includes('ofrecen') || lower.includes('qué tiene') || lower.includes('ventaja')) {
+    objection = 'Pregunta sobre beneficios';
+    textOption = `¡Me encanta que preguntes! Te cuento todo 🌟
+
+En **Agencia Planeta** tienes acceso a:
+
+🛡️ **Soporte Técnico 24/7** — Si te bannean injustamente o tienes problemas de cobro, te respaldamos al instante.
+
+📚 **Academia y Capacitación** — Asesoría personalizada para mejorar tu iluminación, contenido y retención de audiencia.
+
+🏆 **Eventos y Retos** — Acceso a batallas oficiales, eventos globales y bonos extra de dinero/tráfico por cumplir retos.
+
+💎 **100% de tus ganancias** — No te quitamos nada, todo es tuyo.
+
+🆓 **Registro 100% GRATIS** — Sin costos ocultos.
+
+Todo esto con detalle está en nuestra web:
+👉 [ENLACE_DE_LA_WEB]
+
+¿Lo revisas y me dices cuál beneficio te llamó más la atención? 😄`;
+    audioOption = `¡Claro! Te cuento rapidito: en Agencia Planeta tienes soporte técnico 24/7, academia para mejorar tu contenido, acceso a eventos y retos con bonos extra, y lo mejor: te quedas con el 100% de tus ganancias. Todo es gratis. Te dejo el link de la web abajo para que veas cada beneficio con detalle. Revísalo y me cuentas cuál te gustó más.`;
+    tip = 'Pregúntale cuál beneficio le llamó más la atención para personalizar el seguimiento.';
+  }
+  else if (lower.includes('registro') || lower.includes('cómo me uno') || lower.includes('inscri') || lower.includes('empiezo') || lower.includes('primer paso')) {
+    objection = 'Interés en registrarse';
+    textOption = `¡Qué emoción! 🎉 Me alegra mucho que estés listo para dar el paso.
+
+Registrarte es súper fácil y 100% gratis. Solo tienes que entrar a nuestra página web oficial y completar el formulario de registro:
+
+👉 [ENLACE_DE_LA_WEB]
+
+Ahí vas a encontrar toda la info, beneficios y los pasos a seguir. Una vez que te registres, nuestro equipo te contacta para darte la bienvenida y empezar a trabajar juntos. 🚀
+
+¿Entras ahora a la web y me avisas cuando completes el registro? ¡Aquí estoy para ayudarte en lo que necesites! 💪`;
+    audioOption = `¡Genial! Registrarte es súper fácil. Solo entra a nuestra página web, busca el formulario de registro y complétalo. Es 100% gratis. Te dejo el link aquí abajo. Una vez que te registres, nuestro equipo te contacta para darte la bienvenida. Échale un ojo a la web y me avisas cuando lo hagas, ¿va?`;
+    tip = 'Acompáñalo en tiempo real: "Estoy aquí, avísame cuando estés en la página para guiarte paso a paso."';
+  }
+  else {
+    objection = 'Consulta general del creador';
+    textOption = `¡Gracias por tu mensaje! 😊 Entiendo tu duda y quiero ayudarte a resolverla.
+
+En **Agencia Planeta** trabajamos con total transparencia: no cobramos porcentaje de tus ganancias, no pedimos contraseñas, no hay horarios obligatorios y tu cuenta siempre es 100% tuya. 🙌
+
+Para que tengas toda la información de primera mano y puedas resolver cualquier duda con detalle, te invito a visitar nuestra página web oficial:
+
+👉 [ENLACE_DE_LA_WEB]
+
+Ahí encontrarás beneficios, testimonios, políticas y el registro oficial. Échale un ojo y cuéntame qué te parece, ¿vale? Estoy aquí para lo que necesites. 💬`;
+    audioOption = `¡Hola! Mira, para que tengas toda la info completa y resuelvas cualquier duda, te recomiendo visitar nuestra página web oficial. Ahí está todo explicado con detalle: beneficios, políticas, testimonios y el registro. Te dejo el link aquí abajo. Revísalo con calma y me avisas si tienes alguna pregunta, ¿va?`;
+    tip = 'Si la duda es muy específica y no encaja en las categorías, dirígelo a la web y ofrece escalar la consulta al equipo.';
+  }
+  
+  const uniqueId = 'resp_' + Date.now();
+  
+  return `
+    <div class="response-card">
+      <div class="objection-header">
+        💡 <span>OBJECIÓN DETECTADA: ${objection}</span>
+      </div>
+      
+      <div class="response-section">
+        <div class="section-label">📱 OPCIÓN 1: MENSAJE DE TEXTO (Copiar y pegar)</div>
+        <div class="response-text" id="${uniqueId}_text">
+          <button class="copy-btn" onclick="copyText('${uniqueId}_text', this)">📋 Copiar</button>
+          ${textOption}
+        </div>
+      </div>
+      
+      <div class="response-section">
+        <div class="section-label">🎙️ OPCIÓN 2: GUION PARA AUDIO DE WHATSAPP</div>
+        <div class="response-text" id="${uniqueId}_audio">
+          <button class="copy-btn" onclick="copyText('${uniqueId}_audio', this)">📋 Copiar</button>
+          ${audioOption}
+        </div>
+      </div>
+      
+      <div class="tip-card">
+        <strong>📌 CONSEJO:</strong>
+        <span>${tip}</span>
+      </div>
+    </div>
+  `;
+}
+
+function copyText(elementId, btn) {
+  const element = document.getElementById(elementId);
+  const clone = element.cloneNode(true);
+  const copyBtn = clone.querySelector('.copy-btn');
+  if (copyBtn) copyBtn.remove();
+  const text = clone.textContent.trim();
+  
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '✅ Copiado';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = '📋 Copiar';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    btn.innerHTML = '✅ Copiado';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = '📋 Copiar';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
